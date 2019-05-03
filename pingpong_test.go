@@ -37,7 +37,10 @@ func TestPingPongDetach(t *testing.T) {
 	dcChan := make(chan *DataChannel)
 	pcb.OnDataChannel(func(dc *DataChannel) {
 		if dc.Label() == label {
-			dcChan <- dc
+			fmt.Println("OnDataChannel was called")
+			dc.OnOpen(func() {
+				dcChan <- dc
+			})
 		} else {
 			fmt.Printf("Uknown datachannel opened: %s\n", dc.Label())
 		}
@@ -49,14 +52,12 @@ func TestPingPongDetach(t *testing.T) {
 
 		fmt.Println("Waiting for OnDataChannel")
 		attached := <-dcChan
-		fmt.Println("OnDataChannel was called")
+		fmt.Println("data channel opened")
 		dc, err := attached.Detach()
-		fmt.Println("post: pt1")
 		if err != nil {
-			fmt.Printf("Detach failed: %s", err.Error())
+			fmt.Printf("Detach failed: %s\n", err.Error())
 			t.Fatal(err)
 		}
-		fmt.Println("post: pt2")
 		defer dc.Close()
 
 		fmt.Println("Waiting for ping...")
