@@ -204,7 +204,7 @@ func (pc *PeerConnection) initConfiguration(configuration Configuration) error {
 
 	if len(configuration.ICEServers) > 0 {
 		for _, server := range configuration.ICEServers {
-			if _, err := server.validate(); err != nil {
+			if err := server.Validate(); err != nil {
 				return err
 			}
 		}
@@ -341,24 +341,13 @@ func (pc *PeerConnection) OnICEConnectionStateChange(f func(ICEConnectionState))
 	pc.onICEConnectionStateChangeHandler = f
 }
 
-func (pc *PeerConnection) onICEConnectionStateChange(cs ICEConnectionState) (done chan struct{}) {
-	pc.mu.RLock()
-	hdlr := pc.onICEConnectionStateChangeHandler
-	pc.mu.RUnlock()
-
+func (pc *PeerConnection) onICEConnectionStateChange(cs ICEConnectionState) {
 	pc.log.Infof("ICE connection state changed: %s", cs)
-	done = make(chan struct{})
-	if hdlr == nil {
-		close(done)
-		return
+
+	hdlr := pc.onICEConnectionStateChangeHandler
+	if hdlr != nil {
+		go hdlr(cs)
 	}
-
-	go func() {
-		hdlr(cs)
-		close(done)
-	}()
-
-	return
 }
 
 // SetConfiguration updates the configuration of this PeerConnection object.
@@ -424,7 +413,7 @@ func (pc *PeerConnection) SetConfiguration(configuration Configuration) error {
 	if len(configuration.ICEServers) > 0 {
 		// https://www.w3.org/TR/webrtc/#set-the-configuration (step #11.3)
 		for _, server := range configuration.ICEServers {
-			if _, err := server.validate(); err != nil {
+			if err := server.Validate(); err != nil {
 				return err
 			}
 		}
@@ -576,7 +565,9 @@ func (pc *PeerConnection) createICETransport() *ICETransport {
 			pc.log.Warnf("OnConnectionStateChange: unhandled ICE state: %s", state)
 			return
 		}
+		pc.mu.Lock()
 		pc.iceStateChange(cs)
+		pc.mu.Unlock()
 	})
 
 	return t
@@ -1585,6 +1576,9 @@ func (pc *PeerConnection) WriteRTCP(pkts []rtcp.Packet) error {
 
 // Close ends the PeerConnection
 func (pc *PeerConnection) Close() error {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+
 	// https://www.w3.org/TR/webrtc/#dom-rtcpeerconnection-close (step #2)
 	if pc.isClosed {
 		return nil
@@ -1640,10 +1634,7 @@ func (pc *PeerConnection) Close() error {
 }
 
 func (pc *PeerConnection) iceStateChange(newState ICEConnectionState) {
-	pc.mu.Lock()
 	pc.iceConnectionState = newState
-	pc.mu.Unlock()
-
 	pc.onICEConnectionStateChange(newState)
 }
 
@@ -1706,7 +1697,7 @@ func (pc *PeerConnection) addTransceiverSDP(d *sdp.SessionDescription, midValue 
 
 	media = media.WithPropertyAttribute(t.Direction.String())
 	for _, c := range candidates {
-		sdpCandidate := c.toSDP()
+		sdpCandidate := iceCandidateToSDP(c)
 		sdpCandidate.ExtensionAttributes = append(sdpCandidate.ExtensionAttributes, sdp.ICECandidateAttribute{Key: "generation", Value: "0"})
 		sdpCandidate.Component = 1
 		media.WithICECandidate(sdpCandidate)
@@ -1745,7 +1736,7 @@ func (pc *PeerConnection) addDataMediaSection(d *sdp.SessionDescription, midValu
 		WithICECredentials(iceParams.UsernameFragment, iceParams.Password)
 
 	for _, c := range candidates {
-		sdpCandidate := c.toSDP()
+		sdpCandidate := iceCandidateToSDP(c)
 		sdpCandidate.ExtensionAttributes = append(sdpCandidate.ExtensionAttributes, sdp.ICECandidateAttribute{Key: "generation", Value: "0"})
 		sdpCandidate.Component = 1
 		media.WithICECandidate(sdpCandidate)

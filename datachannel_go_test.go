@@ -138,6 +138,10 @@ func TestDataChannel_MessagesAreOrdered(t *testing.T) {
 // Note(albrow): This test includes some features that aren't supported by the
 // Wasm bindings (at least for now).
 func TestDataChannelParamters_Go(t *testing.T) {
+	// Limit runtime in case of deadlocks
+	lim := test.TimeOut(time.Second * 20)
+	defer lim.Stop()
+
 	report := test.CheckRoutines(t)
 	defer report()
 
