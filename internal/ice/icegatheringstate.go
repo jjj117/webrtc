@@ -1,21 +1,21 @@
 package ice
 
-// ICEGatheringState describes the state of the candidate gathering process.
-type ICEGatheringState int
+// GatheringState describes the state of the candidate gathering process.
+type GatheringState int
 
 const (
-	// ICEGatheringStateNew indicates that any of the ICETransports are
+	// GatheringStateNew indicates that any of the ICETransports are
 	// in the "new" gathering state and none of the transports are in the
 	// "gathering" state, or there are no transports.
-	ICEGatheringStateNew ICEGatheringState = iota + 1
+	GatheringStateNew GatheringState = iota + 1
 
-	// ICEGatheringStateGathering indicates that any of the ICETransports
+	// GatheringStateGathering indicates that any of the ICETransports
 	// are in the "gathering" state.
-	ICEGatheringStateGathering
+	GatheringStateGathering
 
-	// ICEGatheringStateComplete indicates that at least one ICETransport
+	// GatheringStateComplete indicates that at least one Transport
 	// exists, and all ICETransports are in the "completed" gathering state.
-	ICEGatheringStateComplete
+	GatheringStateComplete
 )
 
 // This is done this way because of a linter.
@@ -25,27 +25,27 @@ const (
 	iceGatheringStateCompleteStr  = "complete"
 )
 
-// NewICEGatheringState takes a string and converts it to ICEGatheringState
-func NewICEGatheringState(raw string) ICEGatheringState {
+// NewGatheringState takes a string and converts it to GatheringState
+func NewGatheringState(raw string) GatheringState {
 	switch raw {
 	case iceGatheringStateNewStr:
-		return ICEGatheringStateNew
+		return GatheringStateNew
 	case iceGatheringStateGatheringStr:
-		return ICEGatheringStateGathering
+		return GatheringStateGathering
 	case iceGatheringStateCompleteStr:
-		return ICEGatheringStateComplete
+		return GatheringStateComplete
 	default:
-		return ICEGatheringState(Unknown)
+		return GatheringState(Unknown)
 	}
 }
 
-func (t ICEGatheringState) String() string {
+func (t GatheringState) String() string {
 	switch t {
-	case ICEGatheringStateNew:
+	case GatheringStateNew:
 		return iceGatheringStateNewStr
-	case ICEGatheringStateGathering:
+	case GatheringStateGathering:
 		return iceGatheringStateGatheringStr
-	case ICEGatheringStateComplete:
+	case GatheringStateComplete:
 		return iceGatheringStateCompleteStr
 	default:
 		return ErrUnknownType.Error()

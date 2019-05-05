@@ -10,26 +10,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestICEServer_validate(t *testing.T) {
+func TestServer_validate(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		testCases := []struct {
-			iceServer        ICEServer
+			iceServer        Server
 			expectedValidate bool
 		}{
-			{ICEServer{
+			{Server{
 				URLs:           []string{"turn:192.158.29.39?transport=udp"},
 				Username:       "unittest",
 				Credential:     "placeholder",
-				CredentialType: ICECredentialTypePassword,
+				CredentialType: CredentialTypePassword,
 			}, true},
-			{ICEServer{
+			{Server{
 				URLs:     []string{"turn:192.158.29.39?transport=udp"},
 				Username: "unittest",
 				Credential: OAuthCredential{
 					MACKey:      "WmtzanB3ZW9peFhtdm42NzUzNG0=",
 					AccessToken: "AAwg3kPHWPfvk9bDFL936wYvkoctMADzQ5VhNDgeMR3+ZlZ35byg972fW8QjpEl7bx91YLBPFsIhsxloWcXPhA==",
 				},
-				CredentialType: ICECredentialTypeOauth,
+				CredentialType: CredentialTypeOauth,
 			}, true},
 		}
 
@@ -40,35 +40,35 @@ func TestICEServer_validate(t *testing.T) {
 	})
 	t.Run("Failure", func(t *testing.T) {
 		testCases := []struct {
-			iceServer   ICEServer
+			iceServer   Server
 			expectedErr error
 		}{
-			{ICEServer{
+			{Server{
 				URLs: []string{"turn:192.158.29.39?transport=udp"},
 			}, &rtcerr.InvalidAccessError{Err: ErrNoTurnCredencials}},
-			{ICEServer{
+			{Server{
 				URLs:           []string{"turn:192.158.29.39?transport=udp"},
 				Username:       "unittest",
 				Credential:     false,
-				CredentialType: ICECredentialTypePassword,
+				CredentialType: CredentialTypePassword,
 			}, &rtcerr.InvalidAccessError{Err: ErrTurnCredencials}},
-			{ICEServer{
+			{Server{
 				URLs:           []string{"turn:192.158.29.39?transport=udp"},
 				Username:       "unittest",
 				Credential:     false,
-				CredentialType: ICECredentialTypeOauth,
+				CredentialType: CredentialTypeOauth,
 			}, &rtcerr.InvalidAccessError{Err: ErrTurnCredencials}},
-			{ICEServer{
+			{Server{
 				URLs:           []string{"turn:192.158.29.39?transport=udp"},
 				Username:       "unittest",
 				Credential:     false,
 				CredentialType: Unknown,
 			}, &rtcerr.InvalidAccessError{Err: ErrTurnCredencials}},
-			{ICEServer{
+			{Server{
 				URLs:           []string{"stun:google.de?transport=udp"},
 				Username:       "unittest",
 				Credential:     false,
-				CredentialType: ICECredentialTypeOauth,
+				CredentialType: CredentialTypeOauth,
 			}, ice.ErrSTUNQuery},
 		}
 

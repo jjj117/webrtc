@@ -8,19 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestICECandidate_Convert(t *testing.T) {
+func TestCandidate_Convert(t *testing.T) {
 	testCases := []struct {
-		native ICECandidate
+		native Candidate
 		ice    *ice.Candidate
 	}{
 		{
-			ICECandidate{
+			Candidate{
 				Foundation: "foundation",
 				Priority:   128,
 				IP:         "1.0.0.1",
-				Protocol:   ICEProtocolUDP,
+				Protocol:   ProtocolUDP,
 				Port:       1234,
-				Typ:        ICECandidateTypeHost,
+				Typ:        CandidateTypeHost,
 				Component:  1,
 			}, &ice.Candidate{
 				IP:              net.ParseIP("1.0.0.1"),
@@ -32,13 +32,13 @@ func TestICECandidate_Convert(t *testing.T) {
 			},
 		},
 		{
-			ICECandidate{
+			Candidate{
 				Foundation:     "foundation",
 				Priority:       128,
 				IP:             "::1",
-				Protocol:       ICEProtocolUDP,
+				Protocol:       ProtocolUDP,
 				Port:           1234,
-				Typ:            ICECandidateTypeSrflx,
+				Typ:            CandidateTypeSrflx,
 				Component:      1,
 				RelatedAddress: "1.0.0.1",
 				RelatedPort:    4321,
@@ -56,13 +56,13 @@ func TestICECandidate_Convert(t *testing.T) {
 			},
 		},
 		{
-			ICECandidate{
+			Candidate{
 				Foundation:     "foundation",
 				Priority:       128,
 				IP:             "::1",
-				Protocol:       ICEProtocolUDP,
+				Protocol:       ProtocolUDP,
 				Port:           1234,
-				Typ:            ICECandidateTypePrflx,
+				Typ:            CandidateTypePrflx,
 				Component:      1,
 				RelatedAddress: "1.0.0.1",
 				RelatedPort:    4321,
@@ -98,8 +98,8 @@ func TestConvertTypeFromICE(t *testing.T) {
 		if err != nil {
 			t.Fatal("failed coverting ice.CandidateTypeHost")
 		}
-		if ct != ICECandidateTypeHost {
-			t.Fatal("should be coverted to ICECandidateTypeHost")
+		if ct != CandidateTypeHost {
+			t.Fatal("should be coverted to CandidateTypeHost")
 		}
 	})
 	t.Run("srflx", func(t *testing.T) {
@@ -107,8 +107,8 @@ func TestConvertTypeFromICE(t *testing.T) {
 		if err != nil {
 			t.Fatal("failed coverting ice.CandidateTypeServerReflexive")
 		}
-		if ct != ICECandidateTypeSrflx {
-			t.Fatal("should be coverted to ICECandidateTypeSrflx")
+		if ct != CandidateTypeSrflx {
+			t.Fatal("should be coverted to CandidateTypeSrflx")
 		}
 	})
 	t.Run("prflx", func(t *testing.T) {
@@ -116,8 +116,8 @@ func TestConvertTypeFromICE(t *testing.T) {
 		if err != nil {
 			t.Fatal("failed coverting ice.CandidateTypePeerReflexive")
 		}
-		if ct != ICECandidateTypePrflx {
-			t.Fatal("should be coverted to ICECandidateTypePrflx")
+		if ct != CandidateTypePrflx {
+			t.Fatal("should be coverted to CandidateTypePrflx")
 		}
 	})
 }

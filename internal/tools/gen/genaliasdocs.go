@@ -71,10 +71,6 @@ func main() {
 			return
 		}
 		for _, f := range files {
-			if err != nil {
-				fmt.Printf("Error collecting aliased comments: %v", err)
-				return
-			}
 			generate(f, aliasedComments)
 		}
 	}

@@ -1,16 +1,16 @@
 package ice
 
-// ICETransportPolicy defines the ICE candidate policy surface the
+// TransportPolicy defines the ICE candidate policy surface the
 // permitted candidates. Only these candidates are used for connectivity checks.
-type ICETransportPolicy int
+type TransportPolicy int
 
 const (
-	// ICETransportPolicyRelay indicates only media relay candidates such
+	// TransportPolicyRelay indicates only media relay candidates such
 	// as candidates passing through a TURN server are used.
-	ICETransportPolicyRelay ICETransportPolicy = iota + 1
+	TransportPolicyRelay TransportPolicy = iota + 1
 
-	// ICETransportPolicyAll indicates any type of candidate is used.
-	ICETransportPolicyAll
+	// TransportPolicyAll indicates any type of candidate is used.
+	TransportPolicyAll
 )
 
 // This is done this way because of a linter.
@@ -19,23 +19,23 @@ const (
 	iceTransportPolicyAllStr   = "all"
 )
 
-// NewICETransportPolicy takes a string and converts it to ICETransportPolicy
-func NewICETransportPolicy(raw string) ICETransportPolicy {
+// NewTransportPolicy takes a string and converts it to TransportPolicy
+func NewTransportPolicy(raw string) TransportPolicy {
 	switch raw {
 	case iceTransportPolicyRelayStr:
-		return ICETransportPolicyRelay
+		return TransportPolicyRelay
 	case iceTransportPolicyAllStr:
-		return ICETransportPolicyAll
+		return TransportPolicyAll
 	default:
-		return ICETransportPolicy(Unknown)
+		return TransportPolicy(Unknown)
 	}
 }
 
-func (t ICETransportPolicy) String() string {
+func (t TransportPolicy) String() string {
 	switch t {
-	case ICETransportPolicyRelay:
+	case TransportPolicyRelay:
 		return iceTransportPolicyRelayStr
-	case ICETransportPolicyAll:
+	case TransportPolicyAll:
 		return iceTransportPolicyAllStr
 	default:
 		return ErrUnknownType.Error()

@@ -1,17 +1,17 @@
 package ice
 
-// ICECredentialType indicates the type of credentials used to connect to
+// CredentialType indicates the type of credentials used to connect to
 // an ICE server.
-type ICECredentialType int
+type CredentialType int
 
 const (
-	// ICECredentialTypePassword describes username and pasword based
+	// CredentialTypePassword describes username and pasword based
 	// credentials as described in https://tools.ietf.org/html/rfc5389.
-	ICECredentialTypePassword ICECredentialType = iota + 1
+	CredentialTypePassword CredentialType = iota + 1
 
-	// ICECredentialTypeOauth describes token based credential as described
+	// CredentialTypeOauth describes token based credential as described
 	// in https://tools.ietf.org/html/rfc7635.
-	ICECredentialTypeOauth
+	CredentialTypeOauth
 )
 
 // This is done this way because of a linter.
@@ -20,22 +20,22 @@ const (
 	iceCredentialTypeOauthStr    = "oauth"
 )
 
-func newICECredentialType(raw string) ICECredentialType {
+func newCredentialType(raw string) CredentialType {
 	switch raw {
 	case iceCredentialTypePasswordStr:
-		return ICECredentialTypePassword
+		return CredentialTypePassword
 	case iceCredentialTypeOauthStr:
-		return ICECredentialTypeOauth
+		return CredentialTypeOauth
 	default:
-		return ICECredentialType(Unknown)
+		return CredentialType(Unknown)
 	}
 }
 
-func (t ICECredentialType) String() string {
+func (t CredentialType) String() string {
 	switch t {
-	case ICECredentialTypePassword:
+	case CredentialTypePassword:
 		return iceCredentialTypePasswordStr
-	case ICECredentialTypeOauth:
+	case CredentialTypeOauth:
 		return iceCredentialTypeOauthStr
 	default:
 		return ErrUnknownType.Error()

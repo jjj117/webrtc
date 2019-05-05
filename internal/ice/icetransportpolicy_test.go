@@ -6,33 +6,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewICETransportPolicy(t *testing.T) {
+func TestNewTransportPolicy(t *testing.T) {
 	testCases := []struct {
 		policyString   string
-		expectedPolicy ICETransportPolicy
+		expectedPolicy TransportPolicy
 	}{
-		{unknownStr, ICETransportPolicy(Unknown)},
-		{"relay", ICETransportPolicyRelay},
-		{"all", ICETransportPolicyAll},
+		{unknownStr, TransportPolicy(Unknown)},
+		{"relay", TransportPolicyRelay},
+		{"all", TransportPolicyAll},
 	}
 
 	for i, testCase := range testCases {
 		assert.Equal(t,
 			testCase.expectedPolicy,
-			NewICETransportPolicy(testCase.policyString),
+			NewTransportPolicy(testCase.policyString),
 			"testCase: %d %v", i, testCase,
 		)
 	}
 }
 
-func TestICETransportPolicy_String(t *testing.T) {
+func TestTransportPolicy_String(t *testing.T) {
 	testCases := []struct {
-		policy         ICETransportPolicy
+		policy         TransportPolicy
 		expectedString string
 	}{
-		{ICETransportPolicy(Unknown), unknownStr},
-		{ICETransportPolicyRelay, "relay"},
-		{ICETransportPolicyAll, "all"},
+		{TransportPolicy(Unknown), unknownStr},
+		{TransportPolicyRelay, "relay"},
+		{TransportPolicyAll, "all"},
 	}
 
 	for i, testCase := range testCases {

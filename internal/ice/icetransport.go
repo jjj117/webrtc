@@ -12,22 +12,19 @@ import (
 	"github.com/pion/webrtc/v2/internal/mux"
 )
 
-// ICETransport allows an application access to information about the ICE
+// Transport allows an application access to information about the ICE
 // transport over which packets are sent and received.
-type ICETransport struct {
+type Transport struct {
 	lock sync.RWMutex
 
-	role ICERole
-	// Component ICEComponent
-	// State ICETransportState
-	// gatheringState ICEGathererState
+	role Role
 
-	onConnectionStateChangeHdlr       func(ICETransportState)
-	onSelectedCandidatePairChangeHdlr func(*ICECandidatePair)
+	onConnectionStateChangeHdlr       func(TransportState)
+	onSelectedCandidatePairChangeHdlr func(*CandidatePair)
 
-	state ICETransportState
+	state TransportState
 
-	gatherer *ICEGatherer
+	gatherer *Gatherer
 	conn     *ice.Conn
 	mux      *mux.Mux
 
@@ -36,40 +33,40 @@ type ICETransport struct {
 	log logging.LeveledLogger
 }
 
-// func (t *ICETransport) GetLocalCandidates() []ICECandidate {
+// func (t *Transport) GetLocalCandidates() []Candidate {
 //
 // }
 //
-// func (t *ICETransport) GetRemoteCandidates() []ICECandidate {
+// func (t *Transport) GetRemoteCandidates() []Candidate {
 //
 // }
 //
-// func (t *ICETransport) GetSelectedCandidatePair() ICECandidatePair {
+// func (t *Transport) GetSelectedCandidatePair() CandidatePair {
 //
 // }
 //
-// func (t *ICETransport) GetLocalParameters() ICEParameters {
+// func (t *Transport) GetLocalParameters() Parameters {
 //
 // }
 //
-// func (t *ICETransport) GetRemoteParameters() ICEParameters {
+// func (t *Transport) GetRemoteParameters() Parameters {
 //
 // }
 
-// NewICETransport creates a new NewICETransport.
+// NewTransport creates a new Transport.
 // This constructor is part of the ORTC API. It is not
 // meant to be used together with the basic WebRTC API.
-func NewICETransport(gatherer *ICEGatherer, loggerFactory logging.LoggerFactory) *ICETransport {
-	return &ICETransport{
+func NewTransport(gatherer *Gatherer, loggerFactory logging.LoggerFactory) *Transport {
+	return &Transport{
 		gatherer:      gatherer,
 		loggerFactory: loggerFactory,
 		log:           loggerFactory.NewLogger("ortc"),
-		state:         ICETransportStateNew,
+		state:         TransportStateNew,
 	}
 }
 
 // Start incoming connectivity checks based on its configured role.
-func (t *ICETransport) Start(gatherer *ICEGatherer, params ICEParameters, role *ICERole) error {
+func (t *Transport) Start(gatherer *Gatherer, params Parameters, role *Role) error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -83,7 +80,7 @@ func (t *ICETransport) Start(gatherer *ICEGatherer, params ICEParameters, role *
 
 	agent := t.gatherer.agent
 	if err := agent.OnConnectionStateChange(func(iceState ice.ConnectionState) {
-		state := newICETransportStateFromICE(iceState)
+		state := newTransportStateFromICE(iceState)
 		t.lock.Lock()
 		t.state = state
 		t.lock.Unlock()
@@ -93,18 +90,18 @@ func (t *ICETransport) Start(gatherer *ICEGatherer, params ICEParameters, role *
 		return err
 	}
 	if err := agent.OnSelectedCandidatePairChange(func(local, remote *ice.Candidate) {
-		candidates, err := newICECandidatesFromICE([]*ice.Candidate{local, remote})
+		candidates, err := newCandidatesFromICE([]*ice.Candidate{local, remote})
 		if err != nil {
 			t.log.Warnf("Unable to convert ICE candidates to ICECandidates: %s", err)
 			return
 		}
-		t.onSelectedCandidatePairChange(NewICECandidatePair(&candidates[0], &candidates[1]))
+		t.onSelectedCandidatePairChange(NewCandidatePair(&candidates[0], &candidates[1]))
 	}); err != nil {
 		return err
 	}
 
 	if role == nil {
-		controlled := ICERoleControlled
+		controlled := RoleControlled
 		role = &controlled
 	}
 	t.role = *role
@@ -116,12 +113,12 @@ func (t *ICETransport) Start(gatherer *ICEGatherer, params ICEParameters, role *
 	var iceConn *ice.Conn
 	var err error
 	switch *role {
-	case ICERoleControlling:
+	case RoleControlling:
 		iceConn, err = agent.Dial(context.TODO(),
 			params.UsernameFragment,
 			params.Password)
 
-	case ICERoleControlled:
+	case RoleControlled:
 		iceConn, err = agent.Accept(context.TODO(),
 			params.UsernameFragment,
 			params.Password)
@@ -148,8 +145,8 @@ func (t *ICETransport) Start(gatherer *ICEGatherer, params ICEParameters, role *
 	return nil
 }
 
-// Stop irreversibly stops the ICETransport.
-func (t *ICETransport) Stop() error {
+// Stop irreversibly stops the Transport.
+func (t *Transport) Stop() error {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
@@ -160,11 +157,11 @@ func (t *ICETransport) Stop() error {
 		err = t.gatherer.Close()
 	}
 
-	if t.state != ICETransportStateClosed {
-		if t.state != ICETransportStateNew {
-			t.log.Warnf("unexpected state after stopping ice transport: %s, expected %s or %s", t.state, ICETransportStateNew, ICETransportStateClosed)
+	if t.state != TransportStateClosed {
+		if t.state != TransportStateNew {
+			t.log.Warnf("unexpected state after stopping ice transport: %s, expected %s or %s", t.state, TransportStateNew, TransportStateClosed)
 		}
-		t.state = ICETransportStateClosed
+		t.state = TransportStateClosed
 	}
 
 	return err
@@ -172,13 +169,13 @@ func (t *ICETransport) Stop() error {
 
 // OnSelectedCandidatePairChange sets a handler that is invoked when a new
 // ICE candidate pair is selected
-func (t *ICETransport) OnSelectedCandidatePairChange(f func(*ICECandidatePair)) {
+func (t *Transport) OnSelectedCandidatePairChange(f func(*CandidatePair)) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	t.onSelectedCandidatePairChangeHdlr = f
 }
 
-func (t *ICETransport) onSelectedCandidatePairChange(pair *ICECandidatePair) {
+func (t *Transport) onSelectedCandidatePairChange(pair *CandidatePair) {
 	t.lock.RLock()
 	hdlr := t.onSelectedCandidatePairChangeHdlr
 	t.lock.RUnlock()
@@ -189,13 +186,13 @@ func (t *ICETransport) onSelectedCandidatePairChange(pair *ICECandidatePair) {
 
 // OnConnectionStateChange sets a handler that is fired when the ICE
 // connection state changes.
-func (t *ICETransport) OnConnectionStateChange(f func(ICETransportState)) {
+func (t *Transport) OnConnectionStateChange(f func(TransportState)) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	t.onConnectionStateChangeHdlr = f
 }
 
-func (t *ICETransport) onConnectionStateChange(state ICETransportState) {
+func (t *Transport) onConnectionStateChange(state TransportState) {
 	t.lock.RLock()
 	hdlr := t.onConnectionStateChangeHdlr
 	t.lock.RUnlock()
@@ -205,15 +202,15 @@ func (t *ICETransport) onConnectionStateChange(state ICETransportState) {
 }
 
 // Role indicates the current role of the ICE transport.
-func (t *ICETransport) Role() ICERole {
+func (t *Transport) Role() Role {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
 	return t.role
 }
 
-// SetRemoteCandidates sets the sequence of candidates associated with the remote ICETransport.
-func (t *ICETransport) SetRemoteCandidates(remoteCandidates []ICECandidate) error {
+// SetRemoteCandidates sets the sequence of candidates associated with the remote Transport.
+func (t *Transport) SetRemoteCandidates(remoteCandidates []Candidate) error {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
@@ -235,8 +232,8 @@ func (t *ICETransport) SetRemoteCandidates(remoteCandidates []ICECandidate) erro
 	return nil
 }
 
-// AddRemoteCandidate adds a candidate associated with the remote ICETransport.
-func (t *ICETransport) AddRemoteCandidate(remoteCandidate ICECandidate) error {
+// AddRemoteCandidate adds a candidate associated with the remote Transport.
+func (t *Transport) AddRemoteCandidate(remoteCandidate Candidate) error {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 
@@ -258,20 +255,20 @@ func (t *ICETransport) AddRemoteCandidate(remoteCandidate ICECandidate) error {
 
 // State returns the current ice transport state.
 // TODO: create tests
-func (t *ICETransport) State() ICETransportState {
+func (t *Transport) State() TransportState {
 	t.lock.RLock()
 	defer t.lock.RUnlock()
 	return t.state
 }
 
 // NewEndpoint registers a new endpoint on the underlying mux.
-func (t *ICETransport) NewEndpoint(f mux.MatchFunc) *mux.Endpoint {
+func (t *Transport) NewEndpoint(f mux.MatchFunc) *mux.Endpoint {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 	return t.mux.NewEndpoint(f)
 }
 
-func (t *ICETransport) ensureGatherer() error {
+func (t *Transport) ensureGatherer() error {
 	if t.gatherer == nil ||
 		t.gatherer.agent == nil {
 		return errors.New("gatherer not started")
